@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OptiForge — CMG Forge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Design tokens ─────────────────────────────────────────── */
+    :root {
+      --bg: #08090f;
+      --surface: #0e1018;
+      --surface2: #13151f;
+      --surface3: #191c28;
+      --border: #1c1f30;
+      --border-hi: #2c3050;
+      --text: #c8d0e8;
+      --text-dim: #4e5570;
+      --text-bright: #e6eeff;
+      --accent: #a855f7;
+      --accent-20: rgba(168,85,247,0.20);
+      --accent-08: rgba(168,85,247,0.08);
+      --accent-glow: rgba(168,85,247,0.45);
+      --font-ui: 'Rajdhani', sans-serif;
+      --font-mono: 'Share Tech Mono', monospace;
+    }
+
+    /* ── Reset / base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--font-ui);
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      font-size: 15px;
+    }
+
+    /* ── Header ────────────────────────────────────────────────── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 24px;
+      height: 56px;
+      flex-shrink: 0;
+    }
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-20);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .header-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-bright);
+      letter-spacing: 0.04em;
+    }
+    .header-title span { color: var(--accent); }
+    .version-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 7px;
+    }
+    .header-sub {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* ── Main layout ───────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    /* ── Left panel ────────────────────────────────────────────── */
+    .panel-left {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    /* ── Drop zone ─────────────────────────────────────────────── */
+    .drop-zone {
+      border: 2px dashed var(--border-hi);
+      border-radius: 8px;
+      background: var(--surface2);
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      position: relative;
+    }
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-08);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .drop-icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .drop-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 4px;
+    }
+    .drop-hint {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .drop-file-list {
+      margin-top: 12px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    .drop-file-item {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent);
+      background: var(--accent-08);
+      border: 1px solid var(--accent-20);
+      border-radius: 3px;
+      padding: 3px 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Segmented control ─────────────────────────────────────── */
+    .seg-group {
+      display: flex;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .seg-btn {
+      flex: 1;
+      padding: 8px 4px;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+    }
+    .seg-btn + .seg-btn { border-left: 1px solid var(--border); }
+    .seg-btn.active {
+      background: var(--accent-20);
+      color: var(--accent);
+    }
+    .seg-btn:hover:not(.active) {
+      background: var(--surface3);
+      color: var(--text);
+    }
+
+    /* ── Slider ────────────────────────────────────────────────── */
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .slider-row label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .slider-row input[type="range"] {
+      flex: 1;
+      accent-color: var(--accent);
+      height: 4px;
+      cursor: pointer;
+    }
+    .slider-val {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--accent);
+      min-width: 32px;
+      text-align: right;
+    }
+
+    /* ── Toggle / checkbox row ─────────────────────────────────── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-row input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+    .toggle-row span {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* ── Resize inputs ─────────────────────────────────────────── */
+    .resize-block {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .resize-block.visible { display: flex; }
+    .dim-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dim-row label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-dim);
+      min-width: 52px;
+    }
+    .dim-input {
+      flex: 1;
+      background: var(--surface3);
+      border: 1px solid var(--border-hi);
+      border-radius: 5px;
+      color: var(--text-bright);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      padding: 6px 10px;
+      outline: none;
+      transition: border-color 0.12s;
+    }
+    .dim-input:focus { border-color: var(--accent); }
+    .dim-unit {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* ── Divider ───────────────────────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0 -20px;
+    }
+
+    /* ── Buttons ───────────────────────────────────────────────── */
+    .btn-main {
+      width: 100%;
+      padding: 11px;
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: opacity 0.15s, box-shadow 0.15s;
+    }
+    .btn-main:hover:not(:disabled) {
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+    .btn-main:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .export-row {
+      display: none;
+      gap: 8px;
+    }
+    .export-row.visible { display: flex; }
+    .btn-export {
+      flex: 1;
+      padding: 9px;
+      background: var(--surface2);
+      color: var(--accent);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.12s, box-shadow 0.12s;
+    }
+    .btn-export:hover {
+      background: var(--accent-08);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+    .btn-clear {
+      padding: 9px 14px;
+      background: var(--surface2);
+      color: var(--text-dim);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--border-hi);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .btn-clear:hover { color: var(--text); border-color: var(--text-dim); }
+
+    /* ── Right panel ───────────────────────────────────────────── */
+    .panel-right {
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Empty state ───────────────────────────────────────────── */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text-dim);
+    }
+    .empty-icon {
+      font-size: 48px;
+      opacity: 0.3;
+    }
+    .empty-text {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    .empty-sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      opacity: 0.6;
+    }
+
+    /* ── Results panel ─────────────────────────────────────────── */
+    .results-panel {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+    .results-panel.visible { display: flex; }
+    .results-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .results-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .results-count {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent);
+    }
+    .results-table-wrap {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+    .results-table thead th {
+      background: var(--surface);
+      color: var(--text-dim);
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-align: left;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .results-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+    .results-table tbody tr:hover { background: var(--surface2); }
+    .results-table tbody td {
+      padding: 10px 16px;
+      color: var(--text);
+    }
+    .results-table tbody td:first-child {
+      color: var(--text-bright);
+      font-size: 12px;
+    }
+    .savings-cell { color: var(--text-dim); }
+    .savings-cell.good { color: var(--accent); }
+    .summary-row td {
+      border-top: 1px solid var(--border-hi) !important;
+      border-bottom: none !important;
+      background: var(--surface);
+      color: var(--text-bright) !important;
+      font-weight: 700;
+    }
+    .summary-row td:first-child { color: var(--text-dim) !important; }
+
+    /* ── Progress overlay ──────────────────────────────────────── */
+    .progress-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8,9,15,0.75);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .progress-overlay.visible { display: flex; }
+    .progress-spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid var(--border-hi);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .progress-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-bright);
+      letter-spacing: 0.04em;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error toast ───────────────────────────────────────────── */
+    .toast {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #2a1020;
+      border: 1px solid #6b2040;
+      color: #f87171;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 12px 18px;
+      border-radius: 6px;
+      z-index: 300;
+      max-width: 340px;
+    }
+    .toast.visible { display: block; }
+
+    /* ── Responsive ────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .main { grid-template-columns: 1fr; }
+      .panel-left { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────────── -->
+  <header class="header">
+    <a class="header-logo" href="#">
+      <div class="logo-icon">⚙</div>
+      <span class="header-title">Opti<span>Forge</span></span>
+    </a>
+    <span class="version-badge">v1.0.0</span>
+    <span class="header-sub">CMG Forge</span>
+  </header>
+
+  <!-- ── Main layout ───────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- ── Left panel ──────────────────────────────────────────── -->
+    <aside class="panel-left">
+
+      <!-- Drop zone -->
+      <div>
+        <div class="section-label">Images</div>
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="fileInput" multiple accept="image/*" />
+          <span class="drop-icon">📁</span>
+          <div class="drop-title">Drop images here or click to browse</div>
+          <div class="drop-hint">PNG, JPG, WEBP, BMP, TIFF, GIF — up to 50 MB total</div>
+          <div class="drop-file-list" id="fileList"></div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Output format -->
+      <div>
+        <div class="section-label">Output Format</div>
+        <div class="seg-group" id="fmtGroup">
+          <button class="seg-btn active" data-fmt="png">PNG</button>
+          <button class="seg-btn" data-fmt="jpg">JPG</button>
+          <button class="seg-btn" data-fmt="webp">WEBP</button>
+        </div>
+      </div>
+
+      <!-- Quality slider — shown for JPG / WEBP -->
+      <div id="qualitySection">
+        <div class="section-label">Quality</div>
+        <div class="slider-row">
+          <label for="qualitySlider">Quality</label>
+          <input type="range" id="qualitySlider" min="10" max="100" value="85" />
+          <span class="slider-val" id="qualityVal">85</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Resize toggle -->
+      <div>
+        <div class="section-label">Resize</div>
+        <label class="toggle-row">
+          <input type="checkbox" id="resizeToggle" />
+          <span>Enable resizing</span>
+        </label>
+        <div class="resize-block" id="resizeBlock">
+          <div class="dim-row">
+            <label for="widthInput">Width</label>
+            <input class="dim-input" type="number" id="widthInput" placeholder="auto" min="1" max="16384" />
+            <span class="dim-unit">px</span>
+          </div>
+          <div class="dim-row">
+            <label for="heightInput">Height</label>
+            <input class="dim-input" type="number" id="heightInput" placeholder="auto" min="1" max="16384" />
+            <span class="dim-unit">px</span>
+          </div>
+          <label class="toggle-row">
+            <input type="checkbox" id="lockAspect" checked />
+            <span>Lock aspect ratio</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Action buttons -->
+      <button class="btn-main" id="optimizeBtn" disabled>Optimize</button>
+
+      <!-- Export row (hidden until done) -->
+      <div class="export-row" id="exportRow">
+        <button class="btn-export" id="downloadBtn">⬇ Download All ZIP</button>
+        <button class="btn-clear" id="clearBtn">Clear</button>
+      </div>
+
+    </aside>
+
+    <!-- ── Right panel ──────────────────────────────────────────── -->
+    <section class="panel-right">
+
+      <!-- Empty state -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🗜</div>
+        <div class="empty-text">No results yet</div>
+        <div class="empty-sub">Upload images and click Optimize to get started</div>
+      </div>
+
+      <!-- Results panel -->
+      <div class="results-panel" id="resultsPanel">
+        <div class="results-header">
+          <span class="results-title">Results</span>
+          <span class="results-count" id="resultsCount"></span>
+        </div>
+        <div class="results-table-wrap">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>Filename</th>
+                <th>Original</th>
+                <th>Optimized</th>
+                <th>Saved</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- ── Progress overlay ──────────────────────────────────────── -->
+  <div class="progress-overlay" id="progressOverlay">
+    <div class="progress-spinner"></div>
+    <div class="progress-label">Optimizing images…</div>
+  </div>
+
+  <!-- ── Error toast ────────────────────────────────────────────── -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ── State ───────────────────────────────────────────────────
+    let selectedFiles = [];
+    let currentFmt = 'png';
+    let zipBlob = null;
+
+    // ── Element refs ────────────────────────────────────────────
+    const dropZone      = document.getElementById('dropZone');
+    const fileInput     = document.getElementById('fileInput');
+    const fileList      = document.getElementById('fileList');
+    const fmtGroup      = document.getElementById('fmtGroup');
+    const qualitySection= document.getElementById('qualitySection');
+    const qualitySlider = document.getElementById('qualitySlider');
+    const qualityVal    = document.getElementById('qualityVal');
+    const resizeToggle  = document.getElementById('resizeToggle');
+    const resizeBlock   = document.getElementById('resizeBlock');
+    const widthInput    = document.getElementById('widthInput');
+    const heightInput   = document.getElementById('heightInput');
+    const lockAspect    = document.getElementById('lockAspect');
+    const optimizeBtn   = document.getElementById('optimizeBtn');
+    const exportRow     = document.getElementById('exportRow');
+    const downloadBtn   = document.getElementById('downloadBtn');
+    const clearBtn      = document.getElementById('clearBtn');
+    const emptyState    = document.getElementById('emptyState');
+    const resultsPanel  = document.getElementById('resultsPanel');
+    const resultsBody   = document.getElementById('resultsBody');
+    const resultsCount  = document.getElementById('resultsCount');
+    const progressOverlay = document.getElementById('progressOverlay');
+    const toast         = document.getElementById('toast');
+
+    // ── Helpers ─────────────────────────────────────────────────
+    function formatBytes(b) {
+      if (b < 1024) return b + ' B';
+      if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+      return (b / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 4000);
+    }
+
+    function setLoading(on) {
+      progressOverlay.classList.toggle('visible', on);
+    }
+
+    function updateOptimizeBtn() {
+      optimizeBtn.disabled = selectedFiles.length === 0;
+    }
+
+    function renderFileList() {
+      fileList.innerHTML = '';
+      selectedFiles.forEach(f => {
+        const el = document.createElement('div');
+        el.className = 'drop-file-item';
+        el.textContent = f.name;
+        fileList.appendChild(el);
+      });
+    }
+
+    function syncFiles(files) {
+      selectedFiles = Array.from(files);
+      renderFileList();
+      updateOptimizeBtn();
+      // Reset results when new files chosen
+      emptyState.classList.remove('hidden');
+      resultsPanel.classList.remove('visible');
+      exportRow.classList.remove('visible');
+      emptyState.style.display = '';
+      zipBlob = null;
+    }
+
+    // ── Format control ──────────────────────────────────────────
+    qualitySection.style.display = 'none'; // hidden for PNG by default
+
+    fmtGroup.querySelectorAll('.seg-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        fmtGroup.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFmt = btn.dataset.fmt;
+        qualitySection.style.display = (currentFmt === 'jpg' || currentFmt === 'webp') ? '' : 'none';
+      });
+    });
+
+    qualitySlider.addEventListener('input', () => {
+      qualityVal.textContent = qualitySlider.value;
+    });
+
+    // ── Resize toggle ───────────────────────────────────────────
+    resizeToggle.addEventListener('change', () => {
+      resizeBlock.classList.toggle('visible', resizeToggle.checked);
+    });
+
+    // ── Drop zone ───────────────────────────────────────────────
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      if (e.dataTransfer.files.length) syncFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) syncFiles(fileInput.files);
+    });
+
+    // ── Optimize ────────────────────────────────────────────────
+    optimizeBtn.addEventListener('click', async () => {
+      if (!selectedFiles.length) return;
+
+      const fd = new FormData();
+      selectedFiles.forEach(f => fd.append('images[]', f));
+      fd.append('format', currentFmt);
+      fd.append('quality', qualitySlider.value);
+      fd.append('resize', resizeToggle.checked ? 'true' : 'false');
+      fd.append('width', widthInput.value || '');
+      fd.append('height', heightInput.value || '');
+      fd.append('lock_aspect', lockAspect.checked ? 'true' : 'false');
+
+      setLoading(true);
+      try {
+        const resp = await fetch('api/optimize', { method: 'POST', body: fd });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({ error: 'Unknown error' }));
+          throw new Error(err.error || `HTTP ${resp.status}`);
+        }
+
+        // Read results from header
+        const headerRaw = resp.headers.get('X-Results');
+        let results = [];
+        if (headerRaw) {
+          results = JSON.parse(atob(headerRaw));
+        }
+
+        zipBlob = await resp.blob();
+        renderResults(results);
+      } catch (e) {
+        showToast('Error: ' + e.message);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // ── Render results table ────────────────────────────────────
+    function renderResults(results) {
+      resultsBody.innerHTML = '';
+
+      let totalOrig = 0, totalOpt = 0;
+
+      results.forEach(r => {
+        const savings = r.original_size > 0
+          ? ((r.original_size - r.optimized_size) / r.original_size * 100)
+          : 0;
+        totalOrig += r.original_size;
+        totalOpt  += r.optimized_size;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.filename}</td>
+          <td>${formatBytes(r.original_size)}</td>
+          <td>${formatBytes(r.optimized_size)}</td>
+          <td class="savings-cell ${savings > 30 ? 'good' : ''}">${savings.toFixed(1)}%</td>
+        `;
+        resultsBody.appendChild(tr);
+      });
+
+      // Summary row
+      const totalSavings = totalOrig > 0
+        ? ((totalOrig - totalOpt) / totalOrig * 100)
+        : 0;
+      const sumTr = document.createElement('tr');
+      sumTr.className = 'summary-row';
+      sumTr.innerHTML = `
+        <td>TOTAL (${results.length} file${results.length !== 1 ? 's' : ''})</td>
+        <td>${formatBytes(totalOrig)}</td>
+        <td>${formatBytes(totalOpt)}</td>
+        <td class="savings-cell ${totalSavings > 30 ? 'good' : ''}">${totalSavings.toFixed(1)}%</td>
+      `;
+      resultsBody.appendChild(sumTr);
+
+      resultsCount.textContent = `${results.length} file${results.length !== 1 ? 's' : ''}`;
+      emptyState.style.display = 'none';
+      resultsPanel.classList.add('visible');
+      exportRow.classList.add('visible');
+    }
+
+    // ── Download ────────────────────────────────────────────────
+    downloadBtn.addEventListener('click', () => {
+      if (!zipBlob) return;
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'optimized.zip';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // ── Clear ───────────────────────────────────────────────────
+    clearBtn.addEventListener('click', () => {
+      selectedFiles = [];
+      fileInput.value = '';
+      fileList.innerHTML = '';
+      updateOptimizeBtn();
+      zipBlob = null;
+      resultsPanel.classList.remove('visible');
+      exportRow.classList.remove('visible');
+      emptyState.style.display = '';
+      resultsBody.innerHTML = '';
+    });
+  </script>
+<!-- Hub back button -->
+<a href="/" class="hub-back-btn">&#8592; Hub</a>
+<style>
+  .hub-back-btn { position:fixed; bottom:1.25rem; left:1.25rem; padding:.4rem .9rem;
+    background:rgba(22,22,31,.9); border:1px solid #9b5de5; border-radius:999px;
+    color:#9b5de5; font-family:'Rajdhani',sans-serif; font-size:.85rem; font-weight:600;
+    text-decoration:none; backdrop-filter:blur(6px); z-index:9999; transition:.15s; }
+  .hub-back-btn:hover { background:#9b5de5; color:#fff; }
+</style>
+
+</body>
+</html>

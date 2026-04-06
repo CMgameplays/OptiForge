@@ -2,22 +2,20 @@ import io
 import os
 import sys
 import zipfile
-import webbrowser
-import threading
-from flask import Flask, render_template, request, send_file, jsonify
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from flask import Blueprint, render_template, request, send_file, jsonify
 from PIL import Image
 
-app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50 MB
+try:
+    from shared.limiter import limiter
+except ImportError:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+    limiter = Limiter(get_remote_address, storage_uri="memory://")
 
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["200 per day", "60 per hour"],
-    storage_uri="memory://",
-)
+bp = Blueprint("optiforge", __name__, template_folder="templates")
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "bmp", "tiff", "gif"}
 
@@ -79,12 +77,12 @@ def optimize_image(
     return buf.getvalue()
 
 
-@app.route("/")
+@bp.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("optiforge/index.html")
 
 
-@app.route("/api/optimize", methods=["POST"])
+@bp.route("/api/optimize", methods=["POST"])
 @limiter.limit("30 per minute")
 def api_optimize():
     files = request.files.getlist("images[]")
@@ -162,11 +160,14 @@ def api_optimize():
     return response
 
 
-def open_browser():
-    webbrowser.open("http://127.0.0.1:5000")
-
-
 if __name__ == "__main__":
+    import webbrowser
+    import threading
+    from flask import Flask
+    standalone = Flask(__name__)
+    standalone.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
+    standalone.register_blueprint(bp, url_prefix="/")
+    limiter.init_app(standalone)
     if "--no-browser" not in sys.argv:
-        threading.Timer(1.0, open_browser).start()
-    app.run(debug=True, port=5000)
+        threading.Timer(1.0, lambda: webbrowser.open("http://127.0.0.1:5000")).start()
+    standalone.run(debug=True, port=5000)
